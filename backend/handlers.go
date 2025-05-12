@@ -41,7 +41,7 @@ func NewUrl(ctx *fiber.Ctx) error {
 	}
 
 	code := GenerateCode(6)
-	if _, err := db.Exec(`insert into link (name, description, url, code, created_at)
+	if _, err := db.Exec(`insert into link (name, description, url, short_code, created_at)
 			 values($1,$2,$3,$4,$5)`, urlReq.Name, urlReq.Description, urlReq.Url, code, Gettimestamp()); err != nil {
 		return ctx.JSON(fiber.Map{
 			"message": "Database connection error",
@@ -63,7 +63,7 @@ func RedirectUrl(ctx *fiber.Ctx) error {
 	port, _ := strconv.ParseInt(PORT, 10, 64)
 	db, err := GetConnection(HOST, int(port), USER, PWD, DB)
 
-	code := ctx.Params("code", "")
+	code := ctx.Params("shortCode", "")
 	if err != nil {
 		return ctx.JSON(fiber.Map{
 			"message": "Database connection error",
@@ -72,10 +72,9 @@ func RedirectUrl(ctx *fiber.Ctx) error {
 		})
 	}
 
-	result, err := db.Query(`Select url,visitor from link where code=$1`, code)
+	result, err := db.Query(`Select url,click_count from link where short_code=$1`, code)
 
 	if err != nil {
-		fmt.Println("Wrro")
 		return ctx.JSON(fiber.Map{
 			"message": "Database connection error",
 			"detail":  "Unable to establish connection to the database at this time",
@@ -87,7 +86,7 @@ func RedirectUrl(ctx *fiber.Ctx) error {
 	if !result.Next() {
 		return ctx.JSON(fiber.Map{
 			"message": "Not found",
-			"detail":  fmt.Sprintf("Code %s was not found", code),
+			"detail":  fmt.Sprintf("ShortCode %s was not found", code),
 			"status":  404,
 		})
 	}
@@ -97,7 +96,7 @@ func RedirectUrl(ctx *fiber.Ctx) error {
 
 	result.Scan(&url, &visitor)
 
-	if _, err := db.Exec(`Update link set visitor=$1 where code=$2`, (visitor + 1), code); err != nil {
+	if _, err := db.Exec(`Update link set visitor=$1 where short_code=$2`, (visitor + 1), code); err != nil {
 		return ctx.JSON(fiber.Map{
 			"message": "Database connection error",
 			"detail":  "Unable to establish connection to the database at this time",
@@ -120,9 +119,9 @@ func GetUrlByCode(ctx *fiber.Ctx) error {
 		})
 	}
 
-	code := ctx.Params("code", "")
+	code := ctx.Params("shortCode", "")
 
-	result, err := db.Query(`Select name,description,url,code,created_at,updated_at from link where code=$1`, code)
+	result, err := db.Query(`Select name,description,url,short_code,created_at,updated_at from link where short_code=$1`, code)
 
 	if err != nil {
 		return ctx.JSON(fiber.Map{
@@ -143,7 +142,7 @@ func GetUrlByCode(ctx *fiber.Ctx) error {
 
 	ShortendURL := new(ShortendURL)
 
-	result.Scan(&ShortendURL.Name, &ShortendURL.Description, &ShortendURL.Url, &ShortendURL.Code, &ShortendURL.CreatedAt, &ShortendURL.UpdatedAt)
+	result.Scan(&ShortendURL.Name, &ShortendURL.Description, &ShortendURL.Url, &ShortendURL.ShortCode, &ShortendURL.CreatedAt, &ShortendURL.UpdatedAt)
 
 	return ctx.JSON(ShortendURL)
 }
@@ -160,9 +159,9 @@ func GetUrlStatsByCode(ctx *fiber.Ctx) error {
 		})
 	}
 
-	code := ctx.Params("code", "")
+	code := ctx.Params("shortCode", "")
 
-	result, err := db.Query(`Select code,visitor,created_at,updated_at from link where code=$1`, code)
+	result, err := db.Query(`Select short_code,click_count,created_at,updated_at from link where short_code=$1`, code)
 
 	if err != nil {
 		return ctx.JSON(fiber.Map{
@@ -183,11 +182,10 @@ func GetUrlStatsByCode(ctx *fiber.Ctx) error {
 
 	ShortendURL := new(ShortendURLStats)
 
-	result.Scan(&ShortendURL.Code, &ShortendURL.Visitor, &ShortendURL.CreatedAt, &ShortendURL.UpdatedAt)
+	result.Scan(&ShortendURL.ShortCode, &ShortendURL.ClickCount, &ShortendURL.CreatedAt, &ShortendURL.UpdatedAt)
 
 	return ctx.JSON(ShortendURL)
 }
-
 
 func DeleteUrl(ctx *fiber.Ctx) error {
 
@@ -201,9 +199,9 @@ func DeleteUrl(ctx *fiber.Ctx) error {
 		})
 	}
 
-	code := ctx.Params("code", "")
+	code := ctx.Params("shortCode", "")
 
-	result, err := db.Exec(`Delete from link where code=$1`, code)
+	result, err := db.Exec(`Delete from link where short_code=$1`, code)
 
 	if err != nil {
 		return ctx.JSON(fiber.Map{
@@ -246,9 +244,9 @@ func UpdateUrl(ctx *fiber.Ctx) error {
 			"status":  500,
 		})
 	}
-	code := ctx.Params("code", "")
+	code := ctx.Params("shortCode", "")
 
-	result, err := db.Query(`Select url from link where code=$1`, code)
+	result, err := db.Query(`Select url from link where short_code=$1`, code)
 
 	if err != nil {
 		return ctx.JSON(fiber.Map{
@@ -276,8 +274,8 @@ func UpdateUrl(ctx *fiber.Ctx) error {
 		newCode = GenerateCode(6)
 	}
 
-	if _, err := db.Exec(`Update link set name=$1,description=$2,url=$3,code=$4,updated_at=$5
-			where code=$6`, urlReq.Name, urlReq.Description, urlReq.Url, newCode, Gettimestamp(), code); err != nil {
+	if _, err := db.Exec(`Update link set name=$1,description=$2,url=$3,short_code=$4,updated_at=$5
+			where short_code=$6`, urlReq.Name, urlReq.Description, urlReq.Url, newCode, Gettimestamp(), code); err != nil {
 		return ctx.JSON(fiber.Map{
 			"message": "Database connection error",
 			"detail":  "Unable to establish connection to the database at this time",
