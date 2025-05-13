@@ -20,13 +20,13 @@ func main() {
 	app.Get("/status", func(c *fiber.Ctx) error {
 		return c.SendString("Server running...")
 	})
-	app.Get("/:shotCode", RedirectUrl)
+	app.Get("/:shortCode", RedirectUrl)
 	router := app.Group("/shortend")
 	router.Post("/", NewUrl)
-	router.Get("/:shotCode/stats", GetUrlStatsByCode)
-	router.Put("/:shotCode", UpdateUrl)
-	router.Delete("/:shotCode", DeleteUrl)
-	router.Get("/:shotCode/detail", GetUrlByCode)
+	router.Get("/:shortCode/stats", GetUrlStatsByCode)
+	router.Put("/:shortCode", UpdateUrl)
+	router.Delete("/:shortCode", DeleteUrl)
+	router.Get("/:shortCode/detail", GetUrlByCode)
 	app.Listen(fmt.Sprintf(":%s", os.Getenv("SERVER_PORT")))
 
 }

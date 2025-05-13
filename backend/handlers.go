@@ -92,11 +92,11 @@ func RedirectUrl(ctx *fiber.Ctx) error {
 	}
 
 	var url string
-	var visitor int
+	var ClickCount int
 
-	result.Scan(&url, &visitor)
+	result.Scan(&url, &ClickCount)
 
-	if _, err := db.Exec(`Update link set visitor=$1 where short_code=$2`, (visitor + 1), code); err != nil {
+	if _, err := db.Exec(`Update link set click_count=$1 where short_code=$2`, (ClickCount + 1), code); err != nil {
 		return ctx.JSON(fiber.Map{
 			"message": "Database connection error",
 			"detail":  "Unable to establish connection to the database at this time",
@@ -161,7 +161,7 @@ func GetUrlStatsByCode(ctx *fiber.Ctx) error {
 
 	code := ctx.Params("shortCode", "")
 
-	result, err := db.Query(`Select short_code,click_count,created_at,updated_at from link where short_code=$1`, code)
+	result, err := db.Query(`Select url,click_count,created_at,updated_at from link where short_code=$1`, code)
 
 	if err != nil {
 		return ctx.JSON(fiber.Map{
@@ -182,7 +182,7 @@ func GetUrlStatsByCode(ctx *fiber.Ctx) error {
 
 	ShortendURL := new(ShortendURLStats)
 
-	result.Scan(&ShortendURL.ShortCode, &ShortendURL.ClickCount, &ShortendURL.CreatedAt, &ShortendURL.UpdatedAt)
+	result.Scan(&ShortendURL.Url, &ShortendURL.ClickCount, &ShortendURL.CreatedAt, &ShortendURL.UpdatedAt)
 
 	return ctx.JSON(ShortendURL)
 }
