@@ -3,7 +3,7 @@ module github.com/Kamehameha010/url-shortend
 go 1.23.8
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.7
+	github.com/gofiber/fiber/v2 v2.52.13
 	github.com/lib/pq v1.10.9
 )
 
